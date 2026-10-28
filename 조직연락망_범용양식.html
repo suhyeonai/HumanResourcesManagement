@@ -73,7 +73,7 @@ main{max-width:1840px}.org-chart .team-card,.org-chart .bureau-unit,.org-chart .
 .stable-chart .stable-leader{width:320px}
 .stable-chart .stable-leader h4{background:#356367;color:white}
 .stable-chart .stable-leader:first-child h4{background:#244d50}
-.stable-chart .stable-leader:not(:last-child)::after{content:'';position:absolute;width:1px;height:23px;background:#8da8a1;left:50%;top:100%}
+
 .stable-chart .stable-bureaus{position:relative;display:grid;grid-template-columns:repeat(var(--bureau-count),320px);gap:22px;align-items:start;padding-top:22px}
 .stable-chart .stable-bureaus::before{content:'';position:absolute;top:0;left:160px;right:160px;height:1px;background:#8da8a1}
 .stable-chart .stable-bureaus::after{content:'';position:absolute;left:50%;top:-24px;height:24px;width:1px;background:#8da8a1}
@@ -94,6 +94,15 @@ main{max-width:1840px}.org-chart .team-card,.org-chart .bureau-unit,.org-chart .
 .stable-chart .portrait{width:38px;height:48px;flex:none}.stable-chart .role-badge{white-space:normal}
 .stable-chart .unit-empty{font-size:12px;text-align:center;color:#637c8d;padding:4px;margin:0}
 @media print{.print-sheet .org-chart.stable-chart{padding:8px}.print-sheet .stable-chart .stable-unit h4{font-size:17px;color:#152d28}.print-sheet .stable-chart .stable-leader h4{color:white}.print-sheet .stable-chart .person h3{font-size:17px;color:#111}.print-sheet .stable-chart .rank-line,.print-sheet .stable-chart .extension{font-size:15px;color:#111}.print-sheet .stable-chart .role-badge{font-size:12px;color:#111}.print-sheet .stable-chart .stable-departments{gap:14px}.print-sheet .stable-chart .stable-bureau,.print-sheet .stable-chart .stable-departments{break-inside:auto}.print-sheet .stable-chart .stable-unit{break-inside:avoid}.print-sheet .stable-chart .person{padding:6px}}
+
+/* The commissioner branches sideways from the chair/secretary main line. */
+.stable-chart .stable-leadership{display:grid;grid-template-columns:320px 320px 320px;grid-template-rows:auto auto auto;gap:22px;width:1004px;align-items:stretch;position:relative}
+.stable-chart .stable-chair{grid-column:2;grid-row:1}.stable-chart .stable-commissioner{grid-column:1;grid-row:2;align-self:center}.stable-chart .stable-secretary{grid-column:2;grid-row:3}
+.stable-chart .stable-leader::after{display:none}
+.stable-chart .stable-chair::after{display:block;content:'';position:absolute;left:50%;top:100%;height:22px;width:1px;background:#8da8a1}
+.stable-chart .stable-main-link{grid-column:2;grid-row:2;align-self:stretch;background:linear-gradient(to right,transparent calc(50% - .5px),#8da8a1 calc(50% - .5px),#8da8a1 calc(50% + .5px),transparent calc(50% + .5px));position:relative}
+.stable-chart .stable-main-link::after{content:'';position:absolute;left:50%;top:100%;height:22px;width:1px;background:#8da8a1}
+.stable-chart .stable-commissioner::after{display:block;content:'';position:absolute;left:100%;top:50%;height:1px;width:182px;background:#8da8a1}
 </style></head><body>
 <header><small>PEOPLE & CONTACTS</small><h1>조직연락망 만들기</h1><p>부서와 동료를 찾고, 내선번호를 확인하세요.</p></header>
 <main><section class="panel admin"><h2>조직연락망 만들기</h2><div class="tools directory-workflow"><button type="button" id="organizationButton">① 조직 설정</button><button type="button"  onclick="document.getElementById('directoryPeopleActions').showModal()">② 직원 등록·불러오기</button><button type="button"  onclick="document.getElementById('directoryEditGuide').showModal()">③ 사진·연락처 편집</button><button type="button"  onclick="document.getElementById('directorySaveActions').showModal()">④ 저장·배포</button><button type="button"  onclick="printDirectory()">⑤ 인쇄 / PDF</button><button type="button"  onclick="document.getElementById('directoryMoreActions').showModal()">더보기</button></div><p class="note">① 조직과 부서를 설정 → ② 직원을 직접 등록하거나 기존 명단 불러오기 → ③ 직원 카드에서 사진·내선·역할 편집 → ④ 열람용 파일 저장 후 직원에게 전달하세요. 입력 내용은 현재 브라우저에 자동 저장됩니다.</p><details><summary>명단 반영 및 저장 안내</summary><p class="note">직원현황에서 불러올 때는 오늘 기준 재직 중인 직원만 반영합니다. 휴직·병가·퇴직·발령 예정·근무기간 종료 직원은 제외됩니다. 다시 불러오면 최신 명단으로 갱신되며 일치하는 직원의 사진과 내선은 유지합니다.<br>‘작업 자료 저장’은 다음 편집과 복원에, ‘직원 열람용 파일 저장’은 공유에 사용하세요. 파일로 공유한 연락망은 수정 후 다시 저장해 전달해야 합니다.</p></details></section>
@@ -271,12 +280,12 @@ function validateOrganization(value,enforceTeams=false){
  const nodes=value.nodes.map(n=>{if(!n||typeof n.name!=='string'||!n.name.trim()||n.name.length>80||typeof n.parent!=='string')throw Error('조직 단위의 이름과 상위 조직을 확인하세요.');return {name:n.name.replace(/\s+/g,''),parent:n.parent.replace(/\s+/g,'')};});
  for(const n of nodes)if(n.name==='운영지원팀'&&nodes.some(p=>p.name==='인구전략총괄과'))n.parent='인구전략총괄과';
  if(enforceTeams)for(const n of nodes)if(n.name.endsWith('팀')&&!n.parent.endsWith('과'))throw Error(n.name+'의 상위 조직은 과로 선택하세요.');
- if(nodes.some(n=>n.name==='부위원장')&&nodes.some(n=>n.name==='상임위원'))for(const n of nodes)if(n.name==='사무처장'&&n.parent==='부위원장')n.parent='상임위원';
+ if(nodes.some(n=>n.name==='부위원장')&&nodes.some(n=>n.name==='상임위원'))for(const n of nodes)if(n.name==='사무처장'&&n.parent==='상임위원')n.parent='부위원장';
  const map=new Map(nodes.map(n=>[n.name,n]));if(map.size!==nodes.length)throw Error('동일한 부서명은 한 번만 사용할 수 있습니다.');
  for(const n of nodes){let p=n;const visited=new Set();while(p){if(visited.has(p.name))throw Error('상하 관계가 순환합니다: '+n.name);visited.add(p.name);if(visited.size>10)throw Error('최대 10단계까지 구성할 수 있습니다.');if(p.parent&&!map.has(p.parent))throw Error('상위 조직을 찾을 수 없습니다: '+p.parent);p=map.get(p.parent);}}
  return {name:value.name.trim(),nodes};
 }
-function defaultOrganization(){return {name:'인구전략위원회',nodes:[{name:'부위원장',parent:''},{name:'상임위원',parent:'부위원장'},{name:'사무처장',parent:'상임위원'},{name:'운영지원팀',parent:'인구전략총괄과'},...ORG.flatMap(([name,teams])=>[{name,parent:'사무처장'},...teams.map(t=>({name:t,parent:name}))])]};}
+function defaultOrganization(){return {name:'인구전략위원회',nodes:[{name:'부위원장',parent:''},{name:'상임위원',parent:'부위원장'},{name:'사무처장',parent:'부위원장'},{name:'운영지원팀',parent:'인구전략총괄과'},...ORG.flatMap(([name,teams])=>[{name,parent:'사무처장'},...teams.map(t=>({name:t,parent:name}))])]};}
 function organizationPaths(org){const map=new Map(org.nodes.map(n=>[n.name,n]));return org.nodes.map(n=>{const path=[n.name];let parent=n.parent;while(parent){path.unshift(parent);parent=map.get(parent).parent;}return path.join(' > ');}).join('\n');}
 function parseOrganizationLines(name,text){const nodes=new Map();for(const line of text.split(/\r?\n/).filter(s=>s.trim())){const path=line.split('>').map(s=>s.trim().replace(/\s+/g,''));if(path.some(s=>!s))throw Error('빈 조직명이 있습니다. > 앞뒤에 조직명을 입력하세요.');path.forEach((unit,i)=>{const parent=i?path[i-1]:'';if(nodes.has(unit)&&nodes.get(unit).parent!==parent)throw Error('같은 부서에 서로 다른 상위 조직이 지정되었습니다: '+unit);nodes.set(unit,{name:unit,parent});});}return validateOrganization({name,nodes:[...nodes.values()]});}
 // Use CSS tracks for the common leadership / bureau / department layout.
@@ -290,7 +299,8 @@ function renderStableDirectoryChart(org,members){
  const card=(node,kind)=>{visited.add(node.name);const children=org.nodes.filter(n=>n.parent===node.name);return '<section class="stable-unit '+kind+'"><h4>'+esc(node.name)+'</h4>'+members(node)+(children.length?'<div class="stable-contained">'+children.map(child=>card(child,child.name.endsWith('팀')?'stable-team':'stable-subunit')).join('')+'</div>':'')+'</section>';};
  const columns=bureaus.map(bureau=>{visited.add(bureau.name);const departments=org.nodes.filter(n=>n.parent===bureau.name);if(!departments.every(n=>n.name.endsWith('과')))return null;return '<section class="stable-bureau"><div class="stable-unit stable-bureau-head"><h4>'+esc(bureau.name)+'</h4>'+members(bureau)+'</div><div class="stable-departments">'+departments.map(n=>card(n,'stable-department')).join('')+'</div></section>';});
  if(columns.some(c=>c===null)||visited.size!==org.nodes.length)return null;
- return '<div class="org-scroll"><div class="org-chart stable-chart" style="--bureau-count:'+bureaus.length+'" role="group" aria-label="직위, 국, 과, 팀 순서의 조직연락망"><div class="stable-leadership">'+leaders.map(name=>'<section class="stable-unit stable-leader"><h4>'+esc(name)+'</h4>'+members(byName.get(name))+'</section>').join('')+'</div><div class="stable-bureaus">'+columns.join('')+'</div></div></div>';
+ const leader=(name,position)=>'<section class="stable-unit stable-leader '+position+'"><h4>'+esc(name)+'</h4>'+members(byName.get(name))+'</section>';
+ return '<div class="org-scroll"><div class="org-chart stable-chart" style="--bureau-count:'+bureaus.length+'" role="group" aria-label="부위원장과 사무처장 중앙 연결, 상임위원 측면 분기 조직연락망"><div class="stable-leadership">'+leader('부위원장','stable-chair')+leader('상임위원','stable-commissioner')+'<div class="stable-main-link" aria-hidden="true"></div>'+leader('사무처장','stable-secretary')+'</div><div class="stable-bureaus">'+columns.join('')+'</div></div></div>';
 }
 
 function renderCustomOrganization(list){

@@ -11,8 +11,10 @@ for(const file of ['조직연락망_범용양식.html','인구전략위원회_�
  const chart=nodes.get('orgBody').innerHTML;
  assert(chart.includes('stable-departments'));
  assert(chart.includes('stable-team'));
- assert(chart.indexOf('부위원장')<chart.indexOf('상임위원'));
- assert(chart.indexOf('상임위원')<chart.indexOf('사무처장'));
+ assert(chart.indexOf('<h4>부위원장</h4>')<chart.indexOf('<h4>상임위원</h4>'));
+ assert(chart.indexOf('<h4>상임위원</h4>')<chart.indexOf('<h4>사무처장</h4>'));
+ assert(chart.includes('stable-commissioner'));
+ assert(chart.includes('stable-main-link'));
  assert(chart.indexOf('인구전략총괄과')<chart.indexOf('운영지원팀'));
  assert(chart.indexOf('운영지원팀')<chart.indexOf('홍보소통과'));
  assert(!h.includes('(194*96/25.4)/Math.max(1,height)'));
