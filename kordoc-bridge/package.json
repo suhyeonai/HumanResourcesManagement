@@ -1,0 +1,1 @@
+{"name":"organization-directory-kordoc-bridge","private":true,"type":"module","scripts":{"start":"node server.mjs"},"dependencies":{"kordoc":"4.24.14"}}

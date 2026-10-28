@@ -1,0 +1,10 @@
+import fs from 'node:fs/promises';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {fork} from 'node:child_process';
+import {validateHwpx,parse} from 'kordoc';
+const code=await fs.readFile(new URL('./directory-report-client.js',import.meta.url),'utf8');
+const org={name:'검증기관',nodes:[{name:'총괄국',parent:''},{name:'총괄과',parent:'총괄국'},{name:'지원팀',parent:'총괄과'}]},people=[{name:'검증직원',rank:'주무관',roles:[],dept:'지원팀',extension:'0123'},{name:'다른직원',rank:'사무관',roles:[],dept:'총괄과',extension:''}];
+const c=vm.createContext({data:{organization:org,people},validateOrganization:o=>o,localDate:()=> '2026-10-28',normalizeRoles:r=>r,orgUnit:e=>e.dept,compareStaff:(a,b)=>a.name.localeCompare(b.name),$:id=>({value:id==='department'?'지원팀':''})});vm.runInContext(code,c);const payload=c.buildDirectoryHwpx();assert(payload.markdown.includes('총괄국 &gt; 총괄과 &gt; 지원팀'));assert(payload.markdown.includes('0123'));assert(!payload.markdown.includes('다른직원'));assert(!payload.markdown.includes('원소속'));
+const bytes=await new Promise((resolve,reject)=>{const child=fork(new URL('./hwpx-worker.mjs',import.meta.url),[],{stdio:['ignore','ignore','pipe','ipc'],windowsHide:true});const timer=setTimeout(()=>{child.kill();reject(Error('timeout'));},90000);child.on('message',m=>{clearTimeout(timer);m.ok?resolve(Buffer.from(m.base64,'base64')):reject(Error(m.error));});child.on('error',reject);child.on('exit',code=>{if(code)reject(Error('worker exit '+code));});child.send(payload);});
+assert((await validateHwpx(bytes)).ok);const result=await parse(bytes,{images:false,ocr:false});assert(result.success);assert(result.markdown.includes('검증직원'));assert(result.markdown.includes('0123'));console.log('PASS: filtered hierarchy, contact fields, valid HWPX and editable text roundtrip');

@@ -1,0 +1,15 @@
+const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert/strict');
+const root=path.dirname(__dirname),shared=fs.readFileSync(path.join(root,'kordoc-bridge','organization-composition.js'),'utf8');
+const context=vm.createContext({assert});vm.runInContext(shared,context);
+const count=organization=>{context.organization=organization;return vm.runInContext('organizationComposition(organization)',context);};
+const committee=JSON.parse(fs.readFileSync(path.join(root,'인구전략위원회_조직구성.json'),'utf8'));
+assert.equal(count(committee).text,'1처 4국 14과 1팀');
+assert.equal(count({name:'예시조직',nodes:[{name:'기관장',parent:''},{name:'사무처장',parent:'기관장'},{name:'사무처',parent:'기관장'},{name:'제1국',parent:'사무처'},{name:'제2국',parent:'사무처'},{name:'제3국',parent:'사무처'},...Array.from({length:7},(_,i)=>({name:'업무'+i+'팀',parent:'제1국'}))]}).text,'1처 3국 7팀');
+assert.equal(count({name:'예시조직',nodes:[{name:'대표이사',parent:''},{name:'지원본부',parent:'대표이사'},{name:'공석팀',parent:'지원본부'}]}).text,'1본부 1팀');
+assert.equal(count({name:'예시조직',nodes:[]}).text,'구성 미설정');
+const html=fs.readFileSync(path.join(root,'직원현황_범용양식.html'),'utf8');const nodes=new Map();for(const m of html.matchAll(/\sid="([^"]+)"/g))nodes.set(m[1],{value:'',innerHTML:'',textContent:'',options:[],classList:{add(){},remove(){}},addEventListener(){},replaceChildren(...a){this.options=a;this.value=a[0]?.value||'';},add(o){this.options.push(o);},reset(){},showModal(){},close(){}});nodes.get('statusFilter').value='all';nodes.get('sortOrder').value='name';
+const app=vm.createContext({document:{getElementById:id=>nodes.get(id)},window:{addEventListener(){}},localStorage:{getItem(){return null;},setItem(){}},Option:function(t,v){this.text=t;this.value=v;},assert,console,confirm:()=>true});for(const m of html.matchAll(/<script>([\s\S]*?)<\/script>/g))vm.runInContext(m[1],app);
+app.committee=committee;vm.runInContext("store={...store,organization:committee,employees:[]};render();assert.equal($('organizationComposition').textContent,'1처 4국 14과 1팀');assert.equal($('activeCount').textContent,'0명');const report=buildHwpxDocument('summary');assert(report.markdown.includes('조직 구성'));assert(report.markdown.includes('1처 4국 14과 1팀'));assert(!report.markdown.includes('재직 부서'));",app);
+assert(!html.includes('id="historyCount"'));assert(!html.includes("$('historyCount')"));assert(!html.includes('id="departmentCount"'));
+vm.runInContext(`const legacyImport=cleanStore({version:1,employees:[{id:'legacy-test',category:'dispatch',dept:'운영지원팀',name:'검증직원',rank:'사무관',start:'2026-01-01',end:'',employmentStatus:'working'}]});assert.equal(legacyImport.employees.length,1);assert.equal(legacyImport.employees[0].category,'파견직');assert.equal(legacyImport.employees[0].quotaScope,'inside');assert.equal(legacyImport.organization.nodes.find(n=>n.name==='운영지원팀').parent,'인구전략총괄과');assert.equal(legacyImport.staffingGroups.length,6);assert.equal(typeof $('backupFile').onchange,'function');`,app);
+console.log('PASS: organizational suffix counts, leader/unit deduplication, vacant units, zero staff, removed history KPI, full application startup and HWPX organization composition.');
