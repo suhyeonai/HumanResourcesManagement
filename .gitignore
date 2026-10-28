@@ -3,6 +3,9 @@
 *
 !/.gitignore
 !/README.md
+!/index.html
+!/vercel.json
+!/.vercelignore
 !/Kordoc_연결실행.cmd
 !/범용양식_사용안내.md
 !/인구전략위원회_조직구성.json
